@@ -7,19 +7,7 @@ var logger = require('morgan');
 var cookieParser = require('cookie-parser');
 var bodyParser = require('body-parser');
 var sassMiddleware = require('node-sass-middleware');
-var mysql = require('mysql');
-
-var connection = mysql.createConnection(process.env.JAWSDB_MARIA_URL);
-
-connection.connect();
-
-connection.query('SELECT 1 + 1 AS solution', function(err, rows, fields) {
-  if (err) throw err;
-
-  console.log('The solution is: ', rows[0].solution);
-});
-
-connection.end();
+var orm = require('orm');
 
 var index = require('./routes/index');
 var users = require('./routes/users');
@@ -43,6 +31,71 @@ app.use(sassMiddleware({
   sourceMap: true
 }));
 app.use(express.static(path.join(__dirname, 'public')));
+
+app.use(orm.express(process.env.JAWSDB_MARIA_URL, {
+	define: function (db, models, next) {
+        Registered = db.define('registered', {
+            email: String,
+            password: String
+        }, {
+            methods: {
+
+            },
+            validations: {
+
+            }
+        });
+        Admin = Registered.extendsTo('admin', {});
+        Host = Registered.extendsTo('host', {});
+        Attendee = Registered.extendsTo('attendee', {});
+        Hosting = db.define('hosting', {});
+        Attendance = db.define('attendance', {});
+        CreditCard = db.define('credit_card', {
+            name: String,
+            number: String,
+            expr_date: Date,
+            cvv: String
+        });
+        Convention = db.define('convention', {
+            startTime: { type: 'date', time: true },
+            endTime: { type: 'date', time: true },
+            invitationOnly: { type: 'boolean' }
+        });
+        Room = db.define('room', {
+            name: String,
+            type: String
+        });
+        Zone = db.define('zone', {
+            price: Number
+        });
+        Seat = db.define('seat', {
+            locked: Boolean
+        }):
+        Seat = db.define('zone', Zone, { reverse: 'seats' });
+
+        CreditCard.hasOne('owner', Registered, { reverse: 'credit_cards' });
+        Convention.hasOne('room', Room, { reverse: 'conventions' });
+        Convention.hasMany('expectedAttendances', Attendee, {}, { reverse: 'expectedAtConventions' });
+        Zone.hasOne('room', Room, { reverse: 'zones' });
+        Hosting.hasOne('host', Host, { reverse: 'hostings' });
+        Hosting.hasOne('convention', Convention, { reverse: 'hostings' });
+        Attendance.hasOne('attendee', Attendee, { reverse: 'attendances' });
+        Attendance.hasOne('convention', Convention, { reverse: 'attendances' });
+        Attendance.hasOne('seat', Seat, { reverse: 'attendances' });
+
+        models.registered = Registered;
+        models.admin = Admin;
+        models.host = Host;
+        models.attendee = Attendee;
+        models.creditCard = CreditCard;
+        models.convention = Convention;
+        models.room = Room;
+        models.zone = Zone;
+        models.seat = Seat;
+
+		next();
+	}
+}));
 
 app.use('/', index);
 app.use('/users', users);
