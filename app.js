@@ -62,22 +62,25 @@ app.use(orm.express(process.env.JAWSDB_MARIA_URL, {
             endTime: { type: 'date', time: true },
             invitationOnly: { type: 'boolean' }
         });
-        // Room = db.define('room', {
-        //     name: String,
-        //     type: String
-        // });
-        // Zone = db.define('zone', {
-        //     price: Number
-        // });
+        Room = db.define('room', {
+            name: String,
+            type: String
+        });
+        Zone = db.define('zone', {
+            price: Number
+        });
         Seat = db.define('seat', {
             locked: Boolean
         });
-        // Seat = db.define('zone', Zone, { reverse: 'seats' });
+        Seat.hasOne('zone', Zone, { reverse: 'seats' });
 
-        // CreditCard.hasOne('owner', Login, { reverse: 'credit_cards' });
-        // Convention.hasOne('room', Room, { reverse: 'conventions' });
-        // Convention.hasMany('reservedAttendances', Attendee, {}, { reverse: 'reservations' });
-        // Zone.hasOne('room', Room, { reverse: 'zones' });
+        CreditCard.hasOne('owner', Login, { reverse: 'credit_cards' });
+        Convention.hasOne('room', Room, { reverse: 'conventions' });
+
+        // this creates a new relation convention_reservedAttendances
+        Convention.hasMany('reservedAttendances', Attendee, {}, { reverse: 'reservations' });
+
+        Zone.hasOne('room', Room, { reverse: 'zones' });
         Hosting.hasOne('host', Host, { reverse: 'hostings' });
         Hosting.hasOne('convention', Convention, { reverse: 'hostings' });
         Attendance.hasOne('attendee', Attendee, { reverse: 'attendances' });
@@ -85,14 +88,14 @@ app.use(orm.express(process.env.JAWSDB_MARIA_URL, {
         Attendance.hasOne('seat', Seat, { reverse: 'attendances' });
 
         models.login = Login;
-        // models.admin = Admin;
-        // models.host = Host;
-        // models.attendee = Attendee;
-        // models.creditCard = CreditCard;
-        // models.convention = Convention;
-        // models.room = Room;
-        // models.zone = Zone;
-        // models.seat = Seat;
+        models.admin = Admin;
+        models.host = Host;
+        models.attendee = Attendee;
+        models.creditCard = CreditCard;
+        models.convention = Convention;
+        models.room = Room;
+        models.zone = Zone;
+        models.seat = Seat;
 
         console.log('Done defining models');
 
@@ -105,8 +108,6 @@ app.use(orm.express(process.env.JAWSDB_MARIA_URL, {
 
                 next();
             });
-        //     console.log('Start syncing model Login');
-        //     Login.sync(() => { console.log('Done syncing model Login'); });
         });
 	}
 }));
