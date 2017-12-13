@@ -22,10 +22,10 @@ router.get('/status/:conventionId', (req, res) => {
                     res.json(seats.map((seat) => {
                         seat.taken = false;
                         if (Array.isArray(seat.attendances)) {
-                            seat.attendancesInThisConvention = seat.attendances.filter(
+                            seat.attendances = seat.attendances.filter(
                                 attendance => attendance.convention_id == req.params.conventionId
                             );
-                            seat.taken = seat.attendancesInThisConvention.length > 0;
+                            seat.taken = seat.attendances.length > 0;
                         }
                         return seat;
                     }));
