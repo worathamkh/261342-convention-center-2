@@ -2,7 +2,7 @@ var express = require('express');
 var router = express.Router();
 
 router.get('/', function (req, res, next) {
-    req.models.login.find({}).then((err, logins) => {
+    req.models.login.find({}, (err, logins) => {
         if (err) throw err;
         res.json(logins);
         // next();
