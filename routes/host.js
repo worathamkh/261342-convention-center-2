@@ -3,24 +3,26 @@ var router = express.Router();
 var randomName = require('adjective-adjective-animal');
 var changeCase = require('change-case');
 
-router.get('/', function (req, res, next) {
-    req.models.login.find({}, (err, logins) => {
+router.get('/', (req, res) => {
+    req.models.host.find({}, (err, hosts) => {
         if (err) throw err;
-        res.json(logins);
+        res.json(hosts);
         // next();
     });
 });
 
-router.post('/new', function (req, res, next) {
+router.post('/new', (req, res) => {
     randomName(2).then((name) => {
         req.models.login.create({
             email: changeCase.camelCase(name) + '@gmail.com',
             password: '123',
-            name: changeCase.titleCase(name)
-        }, (err) => {
+            name: changeCase.titleCase(name),
+        }, (err, login) => {
             if (err) throw err;
-            res.json({ success: true });
-            // next();
+            login.setHost(new Host({}), (err) => {
+                if (err) throw err;
+                res.json({ success: true });
+            });
         });
     });
 });
@@ -29,7 +31,7 @@ router.get('/clear', (req, res) => {
     if (req.query.magicword !== '123') {
         res.json({ success: false });
     } else {
-        req.models.login.find({}).remove((err) => {
+        req.models.host.find({}).remove((err) => {
             if (err) throw err;
             res.json({ success: true });
         });

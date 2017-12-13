@@ -47,10 +47,14 @@ app.use(orm.express(process.env.JAWSDB_MARIA_URL, {
             }
         });
         Admin = Login.extendsTo('admin', {});
-        Host = Login.extendsTo('host', {});
+        Host = Login.extendsTo('host', {}, {
+            reverse: 'login',
+            required: true
+        });
         Attendee = Login.extendsTo('attendee', {});
         Hosting = db.define('hosting', {});
         Attendance = db.define('attendance', {});
+        Reservation = db.define('reservation', {});
         CreditCard = db.define('credit_card', {
             name: String,
             number: String,
@@ -62,9 +66,12 @@ app.use(orm.express(process.env.JAWSDB_MARIA_URL, {
             endTime: { type: 'date', time: true },
             invitationOnly: { type: 'boolean' }
         });
+        RoomType = db.define('room_type', {
+            name: String,
+            description: String
+        });
         Room = db.define('room', {
             name: String,
-            type: String
         });
         Zone = db.define('zone', {
             price: Number
@@ -72,20 +79,26 @@ app.use(orm.express(process.env.JAWSDB_MARIA_URL, {
         Seat = db.define('seat', {
             locked: Boolean
         });
-        Seat.hasOne('zone', Zone, { reverse: 'seats' });
 
         CreditCard.hasOne('owner', Login, { reverse: 'credit_cards' });
+
         Convention.hasOne('room', Room, { reverse: 'conventions' });
 
-        // this creates a new relation convention_reservedAttendances
-        Convention.hasMany('reservedAttendances', Attendee, {}, { reverse: 'reservations' });
-
+        Room.hasOne('type', RoomType, { reverse: 'rooms' });
         Zone.hasOne('room', Room, { reverse: 'zones' });
+        Seat.hasOne('zone', Zone, { reverse: 'seats' });
+
         Hosting.hasOne('host', Host, { reverse: 'hostings' });
         Hosting.hasOne('convention', Convention, { reverse: 'hostings' });
+
         Attendance.hasOne('attendee', Attendee, { reverse: 'attendances' });
         Attendance.hasOne('convention', Convention, { reverse: 'attendances' });
         Attendance.hasOne('seat', Seat, { reverse: 'attendances' });
+
+        // this creates a new relation convention_reservedAttendances
+        // Convention.hasMany('reservedAttendances', Attendee, {}, { reverse: 'reservations' });
+        Reservation.hasOne('convention', Convention, { reverse: 'reservations' });
+        Reservation.hasOne('attendee', Attendee, { reverse: 'reservations' });
 
         models.login = Login;
         models.admin = Admin;
@@ -94,8 +107,12 @@ app.use(orm.express(process.env.JAWSDB_MARIA_URL, {
         models.creditCard = CreditCard;
         models.convention = Convention;
         models.room = Room;
+        models.roomType = RoomType;
         models.zone = Zone;
         models.seat = Seat;
+        models.hosting = Hosting;
+        models.attendance = Attendance;
+        models.reservation = Reservation;
 
         console.log('Done defining models');
 
@@ -114,7 +131,8 @@ app.use(orm.express(process.env.JAWSDB_MARIA_URL, {
 
 app.use('/', index);
 app.use('/users', users);
-app.use('/login', require('./routes/login'));
+// app.use('/login', require('./routes/login'));
+app.use('/host', require('./routes/host'));
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
