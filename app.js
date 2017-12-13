@@ -134,6 +134,7 @@ app.use('/users', users);
 // app.use('/login', require('./routes/login'));
 app.use('/api/host', require('./routes/host'));
 app.use('/api/roomType', require('./routes/roomType'));
+app.use('/api/room', require('./routes/room'));
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {

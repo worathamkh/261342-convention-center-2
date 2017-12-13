@@ -3,9 +3,9 @@ var router = express.Router();
 var async = require('async');
 
 router.get('/', (req, res) => {
-    req.models.roomType.find({}, (err, roomTypes) => {
+    req.models.room.find({}, { autoFetch: true }, (err, rooms) => {
         if (err) throw err;
-        res.json(roomTypes);
+        res.json(rooms);
         // next();
     });
 });
@@ -14,36 +14,68 @@ router.get('/reset', (req, res) => {
     if (req.query.magicword !== '123') {
         res.json({ success: false });
     } else {
-        req.models.roomType.find({}).remove((err) => {
+        req.models.room.find({}).remove((err) => {
             if (err) throw err;
             async.parallel([
                 (cb) => {
-                    req.models.roomType.create({
+                    req.models.room.create({
                         id: 1,
-                        name: 'Auditorium',
-                        description: 'A room for play'
-                    }, cb);
+                        name: 'Auditorium 1',
+                    }, (err, room1) => {
+                        if (err) { cb(err); return; }
+                        req.models.roomType.get(1, (err, roomType1) => {
+                            if (err) { cb(err); return; }
+                            room1.setType(roomType1, (err) => {
+                                if (err) { cb(err); return; }
+                                cb(null, room1);
+                            });
+                        });
+                    });
                 },
                 (cb) => {
-                    req.models.roomType.create({
+                    req.models.room.create({
                         id: 2,
-                        name: 'Concert Hall',
-                        description: 'A room for music'
-                    }, cb);
+                        name: 'Concert Hall 1',
+                    }, (err, room2) => {
+                        if (err) { cb(err); return; }
+                        req.models.roomType.get(2, (err, roomType2) => {
+                            if (err) { cb(err); return; }
+                            room2.setType(roomType2, (err) => {
+                                if (err) { cb(err); return; }
+                                cb(null, room2);
+                            });
+                        });
+                    });
                 },
                 (cb) => {
-                    req.models.roomType.create({
+                    req.models.room.create({
                         id: 3,
-                        name: 'Lecture Hall',
-                        description: 'A room for lecture'
-                    }, cb);
+                        name: 'Lecture Hall 1',
+                    }, (err, room3) => {
+                        if (err) { cb(err); return; }
+                        req.models.roomType.get(3, (err, roomType3) => {
+                            if (err) { cb(err); return; }
+                            room3.setType(roomType3, (err) => {
+                                if (err) { cb(err); return; }
+                                cb(null, room3);
+                            });
+                        });
+                    });
                 },
                 (cb) => {
-                    req.models.roomType.create({
+                    req.models.room.create({
                         id: 4,
-                        name: 'Conference Room',
-                        description: 'A room for conference'
-                    }, cb);
+                        name: 'Conference Room 1',
+                    }, (err, room4) => {
+                        if (err) { cb(err); return; }
+                        req.models.roomType.get(4, (err, roomType4) => {
+                            if (err) { cb(err); return; }
+                            room4.setType(roomType4, (err) => {
+                                if (err) { cb(err); return; }
+                                cb(null, room4);
+                            });
+                        });
+                    });
                 }
             ], (err, results) => {
                 if (err) throw err;
@@ -57,7 +89,7 @@ router.get('/clear', (req, res) => {
     if (req.query.magicword !== '123') {
         res.json({ success: false });
     } else {
-        req.models.roomType.find({}).remove((err) => {
+        req.models.room.find({}).remove((err) => {
             if (err) throw err;
             res.json({ success: true });
         });
