@@ -116,23 +116,24 @@ app.use(orm.express(process.env.JAWSDB_MARIA_URL, {
 
         console.log('Done defining models');
 
-        console.log('Start dropping tables');
-        db.drop(() => {
-            console.log('Done dropping tables');
+        // console.log('Start dropping tables');
+        // db.drop(() => {
+        //     console.log('Done dropping tables');
             console.log('Start syncing all models');
             db.sync(() => {
                 console.log('Done syncing all models');
 
                 next();
             });
-        });
+        // });
 	}
 }));
 
 app.use('/', index);
 app.use('/users', users);
 // app.use('/login', require('./routes/login'));
-app.use('/host', require('./routes/host'));
+app.use('/api/host', require('./routes/host'));
+app.use('/api/roomType', require('./routes/roomType'));
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
