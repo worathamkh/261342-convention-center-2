@@ -68,6 +68,8 @@ app.use(orm.express(process.env.JAWSDB_MARIA_URL, {
             cvv: String
         });
         Convention = db.define('convention', {
+            title: { type: 'text' },
+            description: { type: 'text' },
             startTime: { type: 'date', time: true },
             endTime: { type: 'date', time: true },
             invitationOnly: { type: 'boolean' }
@@ -83,7 +85,8 @@ app.use(orm.express(process.env.JAWSDB_MARIA_URL, {
             price: Number
         });
         Seat = db.define('seat', {
-            locked: Boolean
+            x: Number,
+            y: Number
         });
 
         CreditCard.hasOne('owner', Login, { reverse: 'credit_cards' });
@@ -142,6 +145,7 @@ app.use('/api/host', require('./routes/host'));
 app.use('/api/roomType', require('./routes/roomType'));
 app.use('/api/room', require('./routes/room'));
 app.use('/api/zone', require('./routes/zone'));
+app.use('/api/convention', require('./routes/convention'));
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {

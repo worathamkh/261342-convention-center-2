@@ -2,7 +2,6 @@ var express = require('express');
 var router = express.Router();
 var randomName = require('adjective-adjective-animal');
 var changeCase = require('change-case');
-var async = require('async');
 
 router.get('/', (req, res) => {
     req.models.host.find({}, { autoFetch: true }, (err, hosts) => {

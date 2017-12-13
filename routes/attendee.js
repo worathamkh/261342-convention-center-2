@@ -4,7 +4,7 @@ var randomName = require('adjective-adjective-animal');
 var changeCase = require('change-case');
 
 router.get('/', (req, res) => {
-    req.models.attendee.find({}, (err, attendees) => {
+    req.models.attendee.find({}, { autoFetch: true}, (err, attendees) => {
         if (err) throw err;
         res.json(attendees);
         // next();
