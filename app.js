@@ -43,45 +43,42 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.use(orm.express(process.env.JAWSDB_MARIA_URL, {
 	define: function (db, models, next) {
         Login = db.define('login', {
-            email: String,
-            password: String,
-            name: String
-        }, {
-            methods: {
-
-            },
-            validations: {
-
-            }
+            email: { type: 'text' },
+            password: { type: 'text' },
+            name: { type: 'text' }
         });
         Admin = Login.extendsTo('admin', {});
         Host = Login.extendsTo('host', {}, {
             methods: {
-                isFreeBetween: function (start, end) {
+                isFreeBetween: function (start, end, callback) {
                     var freeStartTime = moment(start);
                     var freeEndTime = moment(end);
-                    // console.log('getHostings');
                     this.getHostings((err, hostings) => {
-                        // console.log(JSON.stringify(err), JSON.stringify(hostings));
-                        if (err) return false;//throw err;
-                        if (hostings.length === 0) {
-                            // console.log('returning true');
-                            return true;
-                        }
-                        async.every(hostings, (hosting, cb) => {
-                            hosting.getConvention((err, convention) => {
-                                // console.log(JSON.stringify(err));
-                                if (err) return false;//throw err;
-                                var conventionStartTime = moment(convention.startTime);
-                                var conventionEndTime = moment(convention.endTime);
-                                var free = freeEndTime.isBefore(conventionStartTime) || conventionEndTime.isBefore(freeStartTime);
-                                // console.log(JSON.stringify(host), JSON.stringify(convention), free);
-                                cb(null, free);
+                        if (err) {
+                            callback(err);
+                        } else if (hostings.length === 0) {
+                            callback(null, true);
+                        } else {
+                            async.every(hostings, (hosting, cb) => {
+                                hosting.getConvention((err, convention) => {
+                                    if (err) {
+                                        cb(err);
+                                    } else {
+                                        var conventionStartTime = moment(convention.startTime);
+                                        var conventionEndTime = moment(convention.endTime);
+                                        var free = freeEndTime.isBefore(conventionStartTime) 
+                                            || conventionEndTime.isBefore(freeStartTime);
+                                        cb(null, free);
+                                    }
+                                });
+                            }, (err, free) => {
+                                if (err) {
+                                    callback(err);
+                                } else {
+                                    callback(null, free);
+                                }
                             });
-                        }, (err, free) => {
-                            if (err) return false;//throw err;
-                            return free;
-                        });
+                        }
                     });
                 }
             }
@@ -89,15 +86,49 @@ app.use(orm.express(process.env.JAWSDB_MARIA_URL, {
             reverse: 'login',
             required: true
         });
-        Attendee = Login.extendsTo('attendee', {});
+        Attendee = Login.extendsTo('attendee', {}, {
+            methods: {
+                isFreeBetween: function (start, end, callback) {
+                    var freeStartTime = moment(start);
+                    var freeEndTime = moment(end);
+                    this.getAttendances((err, attendances) => {
+                        if (err) {
+                            callback(err);
+                        } else if (attendances.length === 0) {
+                            callback(null, true);
+                        } else {
+                            async.every(attendances, (attendance, cb) => {
+                                attendance.getConvention((err, convention) => {
+                                    if (err) {
+                                        cb(err);
+                                    } else {
+                                        var conventionStartTime = moment(convention.startTime);
+                                        var conventionEndTime = moment(convention.endTime);
+                                        var free = freeEndTime.isBefore(conventionStartTime) 
+                                            || conventionEndTime.isBefore(freeStartTime);
+                                        cb(null, free);
+                                    }
+                                });
+                            }, (err, free) => {
+                                if (err) {
+                                    callback(err);
+                                } else {
+                                    callback(null, free);
+                                }
+                            });
+                        }
+                    });
+                }
+            }
+        });
         Hosting = db.define('hosting', {});
         Attendance = db.define('attendance', {});
         Reservation = db.define('reservation', {});
         CreditCard = db.define('credit_card', {
-            name: String,
-            number: String,
-            expr_date: Date,
-            cvv: String
+            name: { type: 'text' },
+            number: { type: 'text' },
+            expr_date: { type: 'date', time: false },
+            cvv: { type: 'text' }
         });
         Convention = db.define('convention', {
             title: { type: 'text' },
@@ -107,18 +138,61 @@ app.use(orm.express(process.env.JAWSDB_MARIA_URL, {
             invitationOnly: { type: 'boolean' }
         });
         RoomType = db.define('room_type', {
-            name: String,
-            description: String
+            name: { type: 'text' },
+            description: { type: 'text' }
         });
         Room = db.define('room', {
-            name: String,
+            name: { type: 'text' },
         });
         Zone = db.define('zone', {
-            price: Number
+            price: { type: 'integer' }
+        }, {
+            // methods: {
+            //     totalSeats: function (callback) {
+            //         this.getSeats((err, seats) => {
+            //             callback(err, seats.length);
+            //         });
+            //     }
+            // }
         });
         Seat = db.define('seat', {
-            x: Number,
-            y: Number
+            row: { type: 'integer' },
+            col: { type: 'integer' }
+        }, {
+            methods: {
+                isOccupiedBetween: function (start, end, callback) {
+                    var checkStartTime = moment(start);
+                    var checkEndTime = moment(end);
+                    // console.log('getHostings');
+                    this.getAttendances((err, attendances) => {
+                        if (err) {
+                            callback(err);
+                        } else if (attendances.length === 0) {
+                            callback(null, false);
+                        } else {
+                            async.every(attendances, (attendance, cb) => {
+                                attendance.getConvention((err, convention) => {
+                                    if (err) {
+                                        cb(err);
+                                    } else {
+                                        var conventionStartTime = moment(convention.startTime);
+                                        var conventionEndTime = moment(convention.endTime);
+                                        var occupied = checkEndTime.isBefore(conventionStartTime) 
+                                            || conventionEndTime.isBefore(checkStartTime);
+                                        cb(null, occupied);
+                                    }
+                                });
+                            }, (err, occupied) => {
+                                if (err) {
+                                    callback(err);
+                                } else {
+                                    callback(null, occupied);
+                                }
+                            });
+                        }
+                    });
+                }
+            }
         });
 
         CreditCard.hasOne('owner', Login, { reverse: 'credit_cards' });
@@ -174,9 +248,11 @@ app.use('/', index);
 app.use('/users', users);
 // app.use('/login', require('./routes/login'));
 app.use('/api/host', require('./routes/host'));
-app.use('/api/roomType', require('./routes/roomType'));
+app.use('/api/attendee', require('./routes/attendee'));
+app.use('/api/roomtype', require('./routes/roomType'));
 app.use('/api/room', require('./routes/room'));
 app.use('/api/zone', require('./routes/zone'));
+app.use('/api/seat', require('./routes/seat'));
 app.use('/api/convention', require('./routes/convention'));
 
 // catch 404 and forward to error handler

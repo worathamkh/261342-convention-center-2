@@ -2,14 +2,38 @@ var express = require('express');
 var router = express.Router();
 var async = require('async');
 var randomAnimal = require('adjective-adjective-animal');
+var randomParagraph = require('random-paragraph');
 var moment = require('moment');
 var randomMoment = require('moment-random');
 var orm = require('orm');
 
-router.get('/', (req, res) => {
+router.get('/all', (req, res) => {
     req.models.convention.find({}, { autoFetch: true }, (err, conventions) => {
         if (err) throw err;
         res.json(conventions);
+    });
+});
+
+router.get('/all2', (req, res) => {
+    req.models.room.find({}, 'id', (err, rooms) => {
+        if (err) throw err;
+        async.parallel(rooms.map((room) => {
+            return (cb) => {
+                req.models.convention.find({ 
+                    room_id: room.id 
+                }, { 
+                    autoFetch: true,
+                    autoFetchLimit: 3 
+                },
+                'startTime',
+                (err, conventions) => {
+                    cb(err, conventions);
+                });
+            };
+        }), (err, conventionsByRoom) => {
+            if (err) throw err;
+            res.json(conventionsByRoom);
+        });
     });
 });
 
@@ -23,52 +47,27 @@ function createConvention(Convention, data, cb) {
     }, (err, overlap) => {
         if (err) {
             cb(err);
-        } else {
-            if (overlap) {
-                cb(new Error('Time slot not available for selected room'));
-            } else {
-                Convention.create(data, (err, convention) => {
-                    if (err) {
-                        cb(err);
-                    } else {
-                        cb(null, convention);
-                    }
-                });
-            }
+            return;
         }
+        if (overlap) {
+            cb(new Error('Time slot not available for selected room'));
+            return;
+        }
+        Convention.create(data, (err, convention) => {
+            if (err) {
+                cb(err);
+                return;
+            }
+            cb(null, convention);
+        });
     });
 }
 
 router.post('/new', (req, res) => {
     createConvention(req.models.convention, req.body, (err, convention) => {
-        if (err) res.json({ success: false, error: err });//throw err;
+        if (err) throw err;
         res.json({ success: true, convention: convention });
     });
-    // var startTime = moment(req.body.startTime).format('YYYY-MM-DD HH:mm:ss');
-    // var endTime = moment(req.body.endTime).format('YYYY-MM-DD HH:mm:ss');
-    // var data = {
-    //     title: req.body.title,
-    //     description: req.body.description,
-    //     startTime: startTime,
-    //     endTime: endTime,
-    //     invitationOnly: req.body.invitationOnly,
-    //     room_id: req.body.room_id
-    // };
-    // req.models.convention.exists({
-    //     room_id: req.body.room_id,
-    //     startTime: orm.lt(endTime),
-    //     endTime: orm.gte(startTime)
-    // }, (err, overlap) => {
-    //     if (err) throw err;
-    //     if (overlap) {
-    //         res.json({ success: false, error: 'Time slot not available for selected room' });
-    //     } else {
-    //         req.models.convention.create(data, (err, convention) => {
-    //             if (err) throw err;
-    //             res.json({ success: true, convention: convention });
-    //         });
-    //     }
-    // });
 });
 
 const patterns = ['The Tales of @', 'The Adventure of @', '@ of The Seven Kingdoms', 'The Sad Story of @', '@ The Great'];
@@ -78,54 +77,46 @@ router.post('/gen', (req, res) => {
             if (err) throw err;
             var host = hosts[Math.floor(Math.random() * hosts.length)];
             var host_id = host.login_id;
-            // console.log(JSON.stringify(host));
-            var pattern = patterns[Math.floor(Math.random() * patterns.length)];
             var start = randomMoment('2018-12-31', moment().format());
             var end = moment(start).add(Math.random() * 4, 'hours');
             var startTime = moment(start).format('YYYY-MM-DD HH:mm:ss');
             var endTime = moment(end).format('YYYY-MM-DD HH:mm:ss');
+            var pattern = patterns[Math.floor(Math.random() * patterns.length)];
             var room_id = Math.ceil(Math.random() * 4);
             var data = {
                 title: pattern.replace('@', animal),
-                description: 'Models and some associations can have one or more properties. Every property has a type and a couple of optional settings you can choose (or leave the default).',
+                description: randomParagraph({ min: 4, max: 9 }),
                 startTime: moment(start).format('YYYY-MM-DD HH:mm:ss'),
                 endTime: moment(end).format('YYYY-MM-DD HH:mm:ss'),
                 invitationOnly: false,
                 room_id: room_id,
-                host_id: host_id
+                host_id: host_id,
+                // hosting: {
+                //     host_login_id: host_id
+                // }
             };
-            var hostIsFree = host.isFreeBetween(startTime, endTime);
-            // console.log(hostIsFree);
-            if (hostIsFree) { // WTF
-                // throw new Error('Host is not free');
-                res.json({ success: false, error: 'Host is not free' });
-            } else {
-                createConvention(req.models.convention, data, (err, convention) => {
-                    if (err) throw err;
-                    req.models.hosting.create({
-                        host_login_id: host_id,
-                        convention_id: convention.id
-                    }, (err, hosting) => {
+            host.isFreeBetween(startTime, endTime, (err, isFree) => {
+                if (err) throw err;
+                if (!isFree) {
+                    res.json({ success: false, error: 'Host is not free' });
+                } else {
+                    createConvention(req.models.convention, data, (err, convention) => {
                         if (err) throw err;
-                        res.json({ success: true, convention: convention });
+                        // convention.convention_id = convention.id
+                        // convention.save((err) => {
+                        //     if (err) throw err;
+                        //     res.json({ success: true, convention: convention });
+                        // });
+                        req.models.hosting.create({
+                            host_login_id: host_id,
+                            convention_id: convention.id
+                        }, (err, hosting) => {
+                            if (err) throw err;
+                            res.json({ success: true, convention: convention });
+                        });
                     });
-                });
-            }
-            // req.models.convention.exists({
-            //     room_id: room_id,
-            //     startTime: orm.lt(endTime),
-            //     endTime: orm.gte(startTime)
-            // }, (err, overlap) => {
-            //     if (err) throw err;
-            //     if (overlap) {
-            //         res.json({ success: false, error: 'Time slot not available for selected room' });
-            //     } else {
-            //         req.models.convention.create(data, (err, convention) => {
-            //             if (err) throw err;
-            //             res.json({ success: true, convention: convention });
-            //         });
-            //     }
-            // });
+                }
+            });
         });
     });
 });

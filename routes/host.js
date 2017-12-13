@@ -11,8 +11,8 @@ router.get('/', (req, res) => {
     });
 });
 
-router.post('/new', (req, res) => {
-    randomName(2).then((name) => {
+router.post('/gen', (req, res) => {
+    randomName(1).then((name) => {
         req.models.login.create({
             email: changeCase.camelCase(name) + '@gmail.com',
             password: '123',
