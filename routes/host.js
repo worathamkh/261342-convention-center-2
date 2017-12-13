@@ -2,9 +2,10 @@ var express = require('express');
 var router = express.Router();
 var randomName = require('adjective-adjective-animal');
 var changeCase = require('change-case');
+var async = require('async');
 
 router.get('/', (req, res) => {
-    req.models.host.find({}, (err, hosts) => {
+    req.models.host.find({}, { autoFetch: true }, (err, hosts) => {
         if (err) throw err;
         res.json(hosts);
         // next();
@@ -34,6 +35,20 @@ router.get('/clear', (req, res) => {
         req.models.host.find({}).remove((err) => {
             if (err) throw err;
             res.json({ success: true });
+        });
+    }
+});
+
+router.get('/resync', (req, res) => {
+    if (req.query.magicword !== '123') {
+        res.json({ success: false });
+    } else {
+        req.models.host.drop((err) => {
+            if (err) throw err;
+            req.models.host.sync((err) => {
+                if (err) throw err;
+                res.json({ success: true });
+            });
         });
     }
 });
