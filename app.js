@@ -34,9 +34,10 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 app.use(orm.express(process.env.JAWSDB_MARIA_URL, {
 	define: function (db, models, next) {
-        Registered = db.define('registered', {
+        Login = db.define('login', {
             email: String,
-            password: String
+            password: String,
+            name: String
         }, {
             methods: {
 
@@ -45,9 +46,9 @@ app.use(orm.express(process.env.JAWSDB_MARIA_URL, {
 
             }
         });
-        Admin = Registered.extendsTo('admin', {});
-        Host = Registered.extendsTo('host', {});
-        Attendee = Registered.extendsTo('attendee', {});
+        Admin = Login.extendsTo('admin', {});
+        Host = Login.extendsTo('host', {});
+        Attendee = Login.extendsTo('attendee', {});
         Hosting = db.define('hosting', {});
         Attendance = db.define('attendance', {});
         CreditCard = db.define('credit_card', {
@@ -73,9 +74,9 @@ app.use(orm.express(process.env.JAWSDB_MARIA_URL, {
         }):
         Seat = db.define('zone', Zone, { reverse: 'seats' });
 
-        CreditCard.hasOne('owner', Registered, { reverse: 'credit_cards' });
+        CreditCard.hasOne('owner', Login, { reverse: 'credit_cards' });
         Convention.hasOne('room', Room, { reverse: 'conventions' });
-        Convention.hasMany('expectedAttendances', Attendee, {}, { reverse: 'expectedAtConventions' });
+        Convention.hasMany('reservedAttendances', Attendee, {}, { reverse: 'reservations' });
         Zone.hasOne('room', Room, { reverse: 'zones' });
         Hosting.hasOne('host', Host, { reverse: 'hostings' });
         Hosting.hasOne('convention', Convention, { reverse: 'hostings' });
@@ -83,7 +84,7 @@ app.use(orm.express(process.env.JAWSDB_MARIA_URL, {
         Attendance.hasOne('convention', Convention, { reverse: 'attendances' });
         Attendance.hasOne('seat', Seat, { reverse: 'attendances' });
 
-        models.registered = Registered;
+        models.login = Login;
         models.admin = Admin;
         models.host = Host;
         models.attendee = Attendee;
@@ -93,12 +94,15 @@ app.use(orm.express(process.env.JAWSDB_MARIA_URL, {
         models.zone = Zone;
         models.seat = Seat;
 
+        console.log('Done creating models');
+
 		next();
 	}
 }));
 
 app.use('/', index);
 app.use('/users', users);
+app.use('/login', require('./routes/login'));
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
