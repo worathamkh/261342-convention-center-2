@@ -2,10 +2,36 @@ var express = require('express');
 var router = express.Router();
 var async = require('async');
 
-router.get('/', (req, res) => {
+router.get('/all', (req, res) => {
     req.models.seat.find({}, { autoFetch: true }, (err, seats) => {
         if (err) throw err;
         res.json(seats);
+    });
+});
+
+router.get('/status/:conventionId', (req, res) => {
+    req.models.convention.get(req.params.conventionId, (err, convention) => {
+        if (err) throw err;
+        convention.getRoom((err, room) => {
+            if (err) throw err;
+            room.getZones((err, zones) => {
+                if (err) throw err;
+                const zoneIds = zones.map(z => z.id);
+                req.models.seat.find({ zone_id: zoneIds }, { autoFetch: true }, (err, seats) => {
+                    if (err) throw err;
+                    res.json(seats.map((seat) => {
+                        seat.taken = false;
+                        if (Array.isArray(seat.attendances)) {
+                            seat.attendancesInThisConvention = seat.attendances.filter(
+                                attendance => attendance.convention_id == req.params.conventionId
+                            );
+                            seat.taken = seat.attendancesInThisConvention.length > 0;
+                        }
+                        return seat;
+                    }));
+                });
+            });
+        });
     });
 });
 

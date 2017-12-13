@@ -160,7 +160,7 @@ app.use(orm.express(process.env.JAWSDB_MARIA_URL, {
             col: { type: 'integer' }
         }, {
             methods: {
-                isOccupiedBetween: function (start, end, callback) {
+                isFreeBetween: function (start, end, callback) {
                     var checkStartTime = moment(start);
                     var checkEndTime = moment(end);
                     // console.log('getHostings');
@@ -168,7 +168,7 @@ app.use(orm.express(process.env.JAWSDB_MARIA_URL, {
                         if (err) {
                             callback(err);
                         } else if (attendances.length === 0) {
-                            callback(null, false);
+                            callback(null, true);
                         } else {
                             async.every(attendances, (attendance, cb) => {
                                 attendance.getConvention((err, convention) => {
@@ -177,16 +177,16 @@ app.use(orm.express(process.env.JAWSDB_MARIA_URL, {
                                     } else {
                                         var conventionStartTime = moment(convention.startTime);
                                         var conventionEndTime = moment(convention.endTime);
-                                        var occupied = checkEndTime.isBefore(conventionStartTime) 
+                                        var free = checkEndTime.isBefore(conventionStartTime) 
                                             || conventionEndTime.isBefore(checkStartTime);
-                                        cb(null, occupied);
+                                        cb(null, free);
                                     }
                                 });
-                            }, (err, occupied) => {
+                            }, (err, free) => {
                                 if (err) {
                                     callback(err);
                                 } else {
-                                    callback(null, occupied);
+                                    callback(null, free);
                                 }
                             });
                         }
@@ -249,6 +249,7 @@ app.use('/users', users);
 // app.use('/login', require('./routes/login'));
 app.use('/api/host', require('./routes/host'));
 app.use('/api/attendee', require('./routes/attendee'));
+app.use('/api/attendance', require('./routes/attendance'));
 app.use('/api/roomtype', require('./routes/roomType'));
 app.use('/api/room', require('./routes/room'));
 app.use('/api/zone', require('./routes/zone'));
