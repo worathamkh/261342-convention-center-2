@@ -8,6 +8,8 @@ var cookieParser = require('cookie-parser');
 var bodyParser = require('body-parser');
 var sassMiddleware = require('node-sass-middleware');
 var orm = require('orm');
+var async = require('async');
+var moment = require('moment');
 
 var index = require('./routes/index');
 var users = require('./routes/users');
@@ -54,6 +56,36 @@ app.use(orm.express(process.env.JAWSDB_MARIA_URL, {
         });
         Admin = Login.extendsTo('admin', {});
         Host = Login.extendsTo('host', {}, {
+            methods: {
+                isFreeBetween: function (start, end) {
+                    var freeStartTime = moment(start);
+                    var freeEndTime = moment(end);
+                    // console.log('getHostings');
+                    this.getHostings((err, hostings) => {
+                        // console.log(JSON.stringify(err), JSON.stringify(hostings));
+                        if (err) return false;//throw err;
+                        if (hostings.length === 0) {
+                            // console.log('returning true');
+                            return true;
+                        }
+                        async.every(hostings, (hosting, cb) => {
+                            hosting.getConvention((err, convention) => {
+                                // console.log(JSON.stringify(err));
+                                if (err) return false;//throw err;
+                                var conventionStartTime = moment(convention.startTime);
+                                var conventionEndTime = moment(convention.endTime);
+                                var free = freeEndTime.isBefore(conventionStartTime) || conventionEndTime.isBefore(freeStartTime);
+                                // console.log(JSON.stringify(host), JSON.stringify(convention), free);
+                                cb(null, free);
+                            });
+                        }, (err, free) => {
+                            if (err) return false;//throw err;
+                            return free;
+                        });
+                    });
+                }
+            }
+        }, {
             reverse: 'login',
             required: true
         });
