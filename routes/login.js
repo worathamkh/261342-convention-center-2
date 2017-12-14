@@ -31,7 +31,7 @@ router.post('/signup', (req, res) => {
             }
         });
     } else {
-        res.json({ success: false });
+        res.json({ success: false, error: 'invalid role; you sent ' + req.body.role });
     }
 });
 
