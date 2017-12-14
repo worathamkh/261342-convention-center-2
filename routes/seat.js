@@ -19,7 +19,7 @@ router.get('/status/:conventionId', (req, res) => {
             room.getZones((err, zones) => {
                 if (err) throw err;
                 const zoneIds = zones.map(z => z.id);
-                req.models.seat.find({ zone_id: zoneIds }, { autoFetch: true }, (err, seats) => {
+                req.models.seat.find({ zone_id: zoneIds }, { autoFetch: true }, 'zone_id row col', (err, seats) => {
                     if (err) throw err;
                     var seats0 = seats.map((seat) => {
                         seat.taken = false;
