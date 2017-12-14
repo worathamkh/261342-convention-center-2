@@ -33,9 +33,12 @@ router.get('/status/:conventionId', (req, res) => {
                     })
                         .sort((a, b) => (a.zone_id < b.zone_id || (a.zone_id === b.zone_id && (a.row < b.row || (a.row === b.row && a.col < b.col)))) ? -1 : 0);
                     var seats1 = [];
+                    var zoneOffset = seats0[0].zone_id;
                     for (var s of seats0) {
-                        if (!Array.isArray(seats1[s.row-1])) seats1[s.row-1] = [];
-                        seats1[s.row-1][s.col-1] = s;
+                        var zid = s.zone_id - zoneOffset;
+                        if (!Array.isArray(seats1[zid])) seats1[zid] = [];
+                        if (!Array.isArray(seats1[zid][s.row-1])) seats1[zid][s.row-1] = [];
+                        seats1[zid][s.row-1][s.col-1] = s;
                     }
                     res.json(seats1);
                 });
