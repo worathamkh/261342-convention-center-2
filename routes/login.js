@@ -3,26 +3,36 @@ var router = express.Router();
 var randomName = require('adjective-adjective-animal');
 var changeCase = require('change-case');
 
-router.get('/', function (req, res, next) {
+router.get('/', function (req, res) {
     req.models.login.find({}, (err, logins) => {
         if (err) throw err;
         res.json(logins);
-        // next();
     });
 });
 
-router.post('/new', function (req, res, next) {
-    randomName(2).then((name) => {
+router.post('/signup', (req, res) => {
+    if (req.body.role === 'host' || req.body.role === 'attendee') {
         req.models.login.create({
-            email: changeCase.camelCase(name) + '@gmail.com',
-            password: '123',
-            name: changeCase.titleCase(name)
-        }, (err) => {
+            email: req.body.email,
+            password: req.body.pass,
+            name: req.body.name
+        }, (err, login) => {
             if (err) throw err;
-            res.json({ success: true });
-            // next();
+            if (req.body.role === 'host') {
+                login.setHost(new req.models.host({}), (err) => {
+                    if (err) throw err;
+                    res.json({ success: true, login_id: login.id });
+                });
+            } else {
+                login.setAttendee(new req.models.attendee({}), (err) => {
+                    if (err) throw err;
+                    res.json({ success: true, login_id: login.id });
+                });
+            }
         });
-    });
+    } else {
+        res.json({ success: false });
+    }
 });
 
 router.get('/clear', (req, res) => {

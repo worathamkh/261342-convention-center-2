@@ -245,8 +245,8 @@ app.use(orm.express(process.env.JAWSDB_MARIA_URL, {
 }));
 
 app.use('/', index);
-app.use('/users', users);
-// app.use('/login', require('./routes/login'));
+// app.use('/users', users);
+app.use('/api/login', require('./routes/login'));
 app.use('/api/host', require('./routes/host'));
 app.use('/api/attendee', require('./routes/attendee'));
 app.use('/api/attendance', require('./routes/attendance'));

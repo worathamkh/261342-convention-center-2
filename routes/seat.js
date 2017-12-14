@@ -12,7 +12,8 @@ router.get('/all', (req, res) => {
 router.get('/status/:conventionId', (req, res) => {
     req.models.convention.get(req.params.conventionId, (err, convention) => {
         if (err) throw err;
-        convention.getRoom((err, room) => {
+        if (!convention) res.json({ success: false, error: 'Convention not found' });
+        else convention.getRoom((err, room) => {
             if (err) throw err;
             room.getZones((err, zones) => {
                 if (err) throw err;
@@ -49,6 +50,11 @@ function resetRoom3(Seat, cb) {
         }
     }
     Seat.create(data, cb);
+}
+
+function resetRoom4(Seat, cb) {
+    // Conference Room
+
 }
 
 router.get('/reset3', (req, res) => {

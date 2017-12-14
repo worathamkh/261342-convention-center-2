@@ -6,7 +6,6 @@ router.get('/', (req, res) => {
     req.models.room.find({}, { autoFetch: true }, (err, rooms) => {
         if (err) throw err;
         res.json(rooms);
-        // next();
     });
 });
 

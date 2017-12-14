@@ -121,11 +121,21 @@ router.get('/reset', (req, res) => {
                         });
                     },
                     (cb) => {
-                        req.models.zone.create({ id: 11, price: 500 }, (err, zone1room4) => {
+                        req.models.zone.create([
+                            { id: 11, price: 50 },
+                            { id: 12, price: 50 },
+                            { id: 13, price: 50 },
+                            { id: 14, price: 50 }
+                        ], (err, room4zones) => {
                             if (err) cb(err);
-                            zone1room4.setRoom(room4, (err) => {
+                            else async.each(room4zones, (room4zone, cb2) => {
+                                room4zone.setRoom(room4, (err) => {
+                                    if (err) cb2(err);
+                                    cb2(null, room4zone);
+                                });
+                            }, (err) => {
                                 if (err) cb(err);
-                                cb(null, zone1room4);
+                                else cb(null, room4zones);
                             });
                         });
                     }
@@ -134,6 +144,17 @@ router.get('/reset', (req, res) => {
                     res.json({ success: true });
                 });
             });
+        });
+    }
+});
+
+router.get('/reset4', (req, res) => {
+    if (req.query.magicword !== '123') {
+        res.json({ success: false });
+    } else {
+        req.models.zone.find({ id: [11, 12, 13, 14] }).remove((err) => {
+            if (err) throw err;
+            res.json(
         });
     }
 });
