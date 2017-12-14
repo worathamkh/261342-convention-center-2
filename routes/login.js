@@ -31,7 +31,7 @@ router.post('/signup', (req, res) => {
             }
         });
     } else {
-        res.json({ success: false, data: req.body, error: 'invalid role; you sent ' + req.body.role });
+        res.json({ success: false, req: { body: req.body, params: req.params, query: req.query }, error: 'invalid role; you sent ' + req.body.role });
     }
 });
 
