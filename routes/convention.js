@@ -84,7 +84,7 @@ router.post('/gen', (req, res) => {
             var startTime = moment(start).format('YYYY-MM-DD HH:mm:ss');
             var endTime = moment(end).format('YYYY-MM-DD HH:mm:ss');
             var pattern = patterns[R.integer(0, patterns.length-1)(E)];
-            var room_id = req.body.room_id || R.integer(1, 4);
+            var room_id = req.body.room_id || R.integer(1, 4)(E);
             var data = {
                 title: pattern.replace('@', animal),
                 description: randomParagraph({ min: 4, max: 9 }),
