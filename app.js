@@ -160,6 +160,9 @@ app.use(orm.express(process.env.JAWSDB_MARIA_URL, {
             col: { type: 'integer' }
         }, {
             methods: {
+                fullName: function () {
+                    return String.fromCharCode(64 + this.row) + this.col;
+                },
                 isFreeBetween: function (start, end, callback) {
                     var checkStartTime = moment(start);
                     var checkEndTime = moment(end);
