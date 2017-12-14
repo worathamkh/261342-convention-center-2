@@ -152,10 +152,26 @@ router.get('/reset4', (req, res) => {
     if (req.query.magicword !== '123') {
         res.json({ success: false });
     } else {
-        // req.models.zone.find({ id: [11, 12, 13, 14] }).remove((err) => {
-        //     if (err) throw err;
-        //     res.json(
-        // });
+        req.models.zone.find({ id: [11, 12, 13, 14] }).remove((err) => {
+            if (err) throw err;
+            req.models.zone.create([
+                { id: 11, price: 50 },
+                { id: 12, price: 50 },
+                { id: 13, price: 50 },
+                { id: 14, price: 50 }
+            ], (err, room4zones) => {
+                if (err) cb(err);
+                else async.each(room4zones, (room4zone, cb2) => {
+                    room4zone.setRoom(room4, (err) => {
+                        if (err) cb2(err);
+                        cb2(null, room4zone);
+                    });
+                }, (err) => {
+                    if (err) cb(err);
+                    else cb(null, room4zones);
+                });
+            });
+        });
     }
 });
 

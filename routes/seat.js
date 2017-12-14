@@ -11,8 +11,9 @@ router.get('/all', (req, res) => {
 
 router.get('/status/:conventionId', (req, res) => {
     req.models.convention.get(req.params.conventionId, (err, convention) => {
-        if (err) throw err;
-        if (!convention) res.json({ success: false, error: 'Convention not found' });
+        // if (err) throw err;
+        // if (!convention) res.json({ success: false, error: 'Convention not found' });
+        if (err) res.json({ success: false, error: 'Convention not found' });
         else convention.getRoom((err, room) => {
             if (err) throw err;
             room.getZones((err, zones) => {
