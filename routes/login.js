@@ -31,8 +31,18 @@ router.post('/signup', (req, res) => {
             }
         });
     } else {
-        res.json({ success: false, req: { body: req.body, params: req.params, query: req.query }, error: 'invalid role; you sent ' + req.body.role });
+        res.json({ success: false, error: 'invalid role; you sent ' + req.body.role });
     }
+});
+
+router.post('/signin', (req, res) => {
+    req.models.login.find({ email: req.body.email, password: req.body.pass }, (err, logins) => {
+        if (err) throw err;
+        if (logins.length === 0) res.json({ success: false });
+        else {
+            res.json({ success: true, login_id: logins[0].id });
+        }
+    });
 });
 
 router.get('/clear', (req, res) => {
