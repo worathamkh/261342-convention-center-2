@@ -19,7 +19,7 @@ router.get('/status/:conventionId', (req, res) => {
             room.getZones((err, zones) => {
                 if (err) throw err;
                 const zoneIds = zones.map(z => z.id);
-                req.models.seat.find({ zone_id: zoneIds }, { autoFetch: true }, 'zone_id row col', (err, seats) => {
+                req.models.seat.find({ zone_id: zoneIds }, { autoFetch: true }, (err, seats) => {
                     if (err) throw err;
                     var seats0 = seats.map((seat) => {
                         seat.taken = false;
@@ -31,7 +31,7 @@ router.get('/status/:conventionId', (req, res) => {
                         }
                         return seat;
                     })
-                       // .sort((a, b) => a.zone_id < b.zone_id || (a.zone_id === b.zone_id && (a.row < b.row || (a.row === b.row && a.col < b.col))));
+                        //.sort((a, b) => a.zone_id < b.zone_id || (a.zone_id === b.zone_id && (a.row < b.row || (a.row === b.row && a.col < b.col))));
                     var seats1 = [];
                     for (var s of seats0) {
                         if (!Array.isArray(seats1[s.row-1])) seats1[s.row-1] = [];
