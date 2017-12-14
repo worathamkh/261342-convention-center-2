@@ -53,9 +53,31 @@ function resetRoom3(Seat, cb) {
     Seat.create(data, cb);
 }
 
-function resetRoom4(Seat, cb) {
+function resetRoom4(models, cb) {
     // Conference Room
-
+    var data = [
+        { rows: 1, cols: 2, zone_id: 11 },
+        { rows: 4, cols: 1, zone_id: 12 },
+        { rows: 1, cols: 2, zone_id: 13 },
+        { rows: 4, cols: 1, zone_id: 14 }
+    ];
+    var data2 = [];
+    for (var z of data) {
+        for (var i = 1; i <= z.rows; i++) {
+            for (var j = 1; j <= z.cols; j++) {
+                data2.push({ zone_id: z.zone_id, row: i, col: j });
+            }
+        }
+    }
+    models.zone.find({ room_id: 4 }, (err, zones) => {
+        if (err) cb(err); else {
+            const zoneIds = zones.map(z => z.id);
+            models.seat.find({ zone_id: zoneIds }).remove((err) => {
+                if (err) cb(err);
+                else models.seat.create(data2, cb);
+            });
+        }
+    });
 }
 
 router.get('/reset3', (req, res) => {
@@ -63,6 +85,17 @@ router.get('/reset3', (req, res) => {
         res.json({ success: false });
     } else {
         resetRoom3(req.models.seat, (err, seats) => {
+            if (err) throw err;
+            res.json({ success: true, seats: seats });
+        });
+    }
+});
+
+router.get('/reset4', (req, res) => {
+    if (req.query.magicword !== '123') {
+        res.json({ success: false });
+    } else {
+        resetRoom4(req.models, (err, seats) => {
             if (err) throw err;
             res.json({ success: true, seats: seats });
         });

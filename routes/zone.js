@@ -155,21 +155,13 @@ router.get('/reset4', (req, res) => {
         req.models.zone.find({ id: [11, 12, 13, 14] }).remove((err) => {
             if (err) throw err;
             req.models.zone.create([
-                { id: 11, price: 50 },
-                { id: 12, price: 50 },
-                { id: 13, price: 50 },
-                { id: 14, price: 50 }
+                { id: 11, price: 50, room_id: 4 },
+                { id: 12, price: 50, room_id: 4 },
+                { id: 13, price: 50, room_id: 4 },
+                { id: 14, price: 50, room_id: 4 }
             ], (err, room4zones) => {
-                if (err) cb(err);
-                else async.each(room4zones, (room4zone, cb2) => {
-                    room4zone.setRoom(room4, (err) => {
-                        if (err) cb2(err);
-                        cb2(null, room4zone);
-                    });
-                }, (err) => {
-                    if (err) cb(err);
-                    else cb(null, room4zones);
-                });
+                if (err) throw err;
+                else res.json(room4zones);
             });
         });
     }
