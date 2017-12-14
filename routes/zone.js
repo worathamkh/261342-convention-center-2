@@ -152,10 +152,10 @@ router.get('/reset4', (req, res) => {
     if (req.query.magicword !== '123') {
         res.json({ success: false });
     } else {
-        req.models.zone.find({ id: [11, 12, 13, 14] }).remove((err) => {
-            if (err) throw err;
-            res.json(
-        });
+        // req.models.zone.find({ id: [11, 12, 13, 14] }).remove((err) => {
+        //     if (err) throw err;
+        //     res.json(
+        // });
     }
 });
 
