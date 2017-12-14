@@ -30,7 +30,7 @@ router.get('/status/:conventionId', (req, res) => {
                             seat.taken = seat.attendances.length > 0;
                         }
                         return seat;
-                    }).sort((a, b) => a.row < b.row || (a.row === b.row && a.col < b.col));
+                    }).sort((a, b) => a.zone_id < b.zone_id || (a.zone_id === b.zone_id && (a.row < b.row || (a.row === b.row && a.col < b.col)));
                     var seats1 = [];
                     for (var s of seats0) {
                         if (!Array.isArray(seats1[s.row-1])) seats1[s.row-1] = [];
